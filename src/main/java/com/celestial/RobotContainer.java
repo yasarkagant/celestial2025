@@ -5,12 +5,21 @@
 
 package com.celestial;
 
+import java.util.HashMap;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.celestial.Constants.OperatorConstants;
 import com.celestial.commands.SwerveJoystickCommand;
 import com.celestial.subsystems.SwerveSubsystem;
+
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -33,7 +42,7 @@ public class RobotContainer
 
     private final XboxController controller = new XboxController(OperatorConstants.DRIVER_CONTROLLER_PORT);
     
-    
+    PathPlannerPath path = PathPlannerPath.fromPathFile("straight");
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer()
     {
@@ -69,6 +78,23 @@ public class RobotContainer
      */
     public Command getAutonomousCommand()
     {
-        return null;
+        HashMap<String, Command> eventMap = new HashMap<>();
+        return new SequentialCommandGroup(
+              new InstantCommand(() -> {
+                      if(true){
+                              swerveSubsystem.resetOdometry(path.getStartingHolonomicPose());
+                      }
+              }),
+              new FollowPathCommand(
+                      path,
+                      swerveSubsystem.getPose(),
+                      speedsSupplier,
+                      output,
+                      new PPHolonomicDriveController(new PIDController(0, 0, 0), new PIDController(0, 0, 0))
+                      robotconfig,
+                      false,
+                      swerveSubsystem
+              )
+      );
     }
 }
